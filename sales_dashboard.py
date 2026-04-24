@@ -180,7 +180,21 @@ def fmt(v):
     return f"${v:.2f}"
 
 # ── File path ─────────────────────────────────────────────────────────────────
-FILE_PATH = r"D:\DD\Sales Data 301798 343672 332860 2021-2024.xlsx"
+import gspread
+from gspread_dataframe import get_as_dataframe
+
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1XiGlPs6WaPv6ibg5dDQ5gNTx7m8xRjLc/edit?gid=649747626#gid=649747626"
+
+@st.cache_data(ttl=60)
+def load_data():
+    gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+    sheet = gc.open_by_url(SHEET_URL)
+    worksheet = sheet.get_worksheet(0)
+    df = get_as_dataframe(worksheet, evaluate_formulas=True).dropna(how="all")
+    df.columns = df.columns.str.strip()
+    return df
+
+df_raw = load_data()
 
 # ── Load ──────────────────────────────────────────────────────────────────────
 @st.cache_data
@@ -219,12 +233,6 @@ def load_data(path):
         df["TotalBrandSales"] = df["DunkinSales"].fillna(0) + df["BaskinSales"].fillna(0)
 
     return df
-
-if not os.path.exists(FILE_PATH):
-    st.error(f"⚠️ File not found:\n\n`{FILE_PATH}`")
-    st.stop()
-
-df_raw = load_data(FILE_PATH)
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
