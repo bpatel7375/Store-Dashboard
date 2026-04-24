@@ -184,7 +184,7 @@ def fmt(v):
 import gspread
 from gspread_dataframe import get_as_dataframe
 
-SHEET_URL = "https://www.googleapis.com/robot/v1/metadata/x509/store-dashboard%40noble-conduit-494306-j5.iam.gserviceaccount.com"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1XiGlPs6WaPv6ibg5dDQ5gNTx7m8xRjLc/edit?gid=649747626#gid=649747626"
 
 @st.cache_data(ttl=60)
 def load_data():
