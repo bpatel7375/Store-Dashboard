@@ -3,7 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import os
+import gspread
+from gspread_dataframe import get_as_dataframe
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -183,7 +184,7 @@ def fmt(v):
 import gspread
 from gspread_dataframe import get_as_dataframe
 
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1XiGlPs6WaPv6ibg5dDQ5gNTx7m8xRjLc/edit?gid=649747626#gid=649747626"
+SHEET_URL = "YOUR_GOOGLE_SHEET_URL_HERE"
 
 @st.cache_data(ttl=60)
 def load_data():
@@ -191,15 +192,6 @@ def load_data():
     sheet = gc.open_by_url(SHEET_URL)
     worksheet = sheet.get_worksheet(0)
     df = get_as_dataframe(worksheet, evaluate_formulas=True).dropna(how="all")
-    df.columns = df.columns.str.strip()
-    return df
-
-df_raw = load_data()
-
-# ── Load ──────────────────────────────────────────────────────────────────────
-@st.cache_data
-def load_data(path):
-    df = pd.read_excel(path)
     df.columns = df.columns.str.strip()
 
     for col in ["TrDate","TrWeekEndDate"]:
@@ -214,18 +206,17 @@ def load_data(path):
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
     if "TrDate" in df.columns:
-        df["Year"]    = df["TrDate"].dt.year
-        df["Month"]   = df["TrDate"].dt.month
+        df["Year"]      = df["TrDate"].dt.year
+        df["Month"]     = df["TrDate"].dt.month
         df["MonthName"] = df["TrDate"].dt.strftime("%b")
         df["YearMonth"] = df["TrDate"].dt.to_period("M").astype(str)
-        df["Quarter"] = df["TrDate"].dt.quarter.apply(lambda x: f"Q{x}")
-        df["WeekDay"] = df["TrDate"].dt.day_name()
-        df["YearQ"]   = df["TrDate"].dt.to_period("Q").astype(str)
+        df["Quarter"]   = df["TrDate"].dt.quarter.apply(lambda x: f"Q{x}")
+        df["WeekDay"]   = df["TrDate"].dt.day_name()
+        df["YearQ"]     = df["TrDate"].dt.to_period("Q").astype(str)
 
     if "PCNumber" in df.columns:
         df["PCNumber"] = df["PCNumber"].astype(str)
 
-    # Derived metrics
     if "GrossSales" in df.columns and "DiscountRefund" in df.columns:
         df["DiscountPct"] = (df["DiscountRefund"].abs() / df["GrossSales"].replace(0, float("nan")) * 100).fillna(0).round(2)
 
@@ -233,6 +224,8 @@ def load_data(path):
         df["TotalBrandSales"] = df["DunkinSales"].fillna(0) + df["BaskinSales"].fillna(0)
 
     return df
+
+df_raw = load_data()
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
